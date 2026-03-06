@@ -6,8 +6,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 from groq import Groq
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
 # ─── App Init ─────────────────────────────────────────────────────────────────
@@ -198,7 +198,6 @@ Certifications: {', '.join(data['certifications'])}
     docs.extend(general_chunks)
 
     vectorstore = Chroma.from_documents(docs, embeddings, persist_directory="./chroma_db")
-    vectorstore.persist()
     return vectorstore
 
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -329,7 +328,7 @@ def update_skill(req: UpdateSkillRequest):
         metadata={"type": "student_progress", "skill": req.skill, "goal": req.goal}
     )
     vectorstore.add_documents([new_doc])
-    vectorstore.persist()
+    # Note: Chroma 0.4+ auto-persists — no .persist() needed
 
     next_advice = llm_call(
         f"You are SkillNova. A student just learned {req.skill} towards becoming a {req.goal}.",
